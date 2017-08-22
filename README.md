@@ -1,4 +1,4 @@
-# projects-manager
+# Projects-Manager
 
 Manage any project with a simple GUI.
 
@@ -12,5 +12,12 @@ sudo apt install python3
 
 ## Usage
 
-Simply run main.py and enjoy.
+Very simple run.
+```
+./src/init.py
+```
 
+## Develop
+
+The interface is developed using the latest version of glade nightly.
+You can install it using [flatpak](http://flatpak.org/).
