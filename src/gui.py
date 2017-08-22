@@ -14,7 +14,7 @@ Gui class manager
 class Gui:
 	def __init__(self):
 		# Gui variable
-		self.builder = Gtk.Builder().new_from_file("%s/../gui/gnome-projects.glade"
+		self.builder = Gtk.Builder().new_from_file("%s/../gui/main.glade"
 			% settings.PROGRAM_PATH)
 		self.main_window    = self.builder.get_object("main_window")
 		self.headerbar      = self.builder.get_object("headerbar")
@@ -54,7 +54,7 @@ class Gui:
 			"undo-confirm"   : lambda *_: self.project_window.dialog.hide()
 		}
 		self.builder.connect_signals(handlers)
-		self.main_window.set_wmclass ("Gnome Projects", "Gnome Projects")
+		self.main_window.set_wmclass ("Projects", "Projects")
 
 	def start(self):
 		self.pm.start()

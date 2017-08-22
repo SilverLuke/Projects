@@ -34,7 +34,7 @@ class Manager(metaclass=Singleton):
 		self.thread.start()
 
 	def close(self):
-		#~ self.save_projects()
+		self.save_projects()
 		self.thread.stop = True
 		self.command_queue.put(None)
 
@@ -63,11 +63,15 @@ class Manager(metaclass=Singleton):
 		logging.debug("All projects are saved")
 
 	def load_projects(self):
-		try:
-			tree = ET.parse(settings.PROJECT_FILE)
-		except:
+		if not os.path.exists(settings.PROJECT_DIR):
+			os.makedirs(settings.PROJECT_DIR)
 			logging.debug("Projects file not found")
+			root = ET.Element("projects")
+			tree = ET.ElementTree(root)
+			tree.write(settings.PROJECT_FILE, pretty_print=True)
 			return
+		else:
+			tree = ET.parse(settings.PROJECT_FILE)
 
 		root = tree.getroot()
 		for p in root.findall('project'):
