@@ -47,6 +47,7 @@ class Manager(metaclass=Singleton):
 			ET.SubElement(p, "path").text = project.path
 			ET.SubElement(p, "update").text = project.update_cmd
 			ET.SubElement(p, "compile").text = project.compile_cmd
+			ET.SubElement(p, "run").text = project.run_cmd
 
 			if project.last_update is None:
 				ET.SubElement(p, "last_update").text = None
@@ -59,19 +60,19 @@ class Manager(metaclass=Singleton):
 				ET.SubElement(p, "last_compile").text = project.last_compile.strftime(settings.DATE_FORMAT)
 
 		tree = ET.ElementTree(root)
-		tree.write(settings.PROJECT_FILE, pretty_print=True)
+		tree.write(settings.PATH_PROJECT_FILE, pretty_print=True)
 		logging.debug("All projects are saved")
 
 	def load_projects(self):
-		if not os.path.exists(settings.PROJECT_DIR):
-			os.makedirs(settings.PROJECT_DIR)
+		if not os.path.exists(settings.PATH_PROJECT_DIR):
+			os.makedirs(settings.PATH_PROJECT_DIR)
 			logging.debug("Projects file not found")
 			root = ET.Element("projects")
 			tree = ET.ElementTree(root)
-			tree.write(settings.PROJECT_FILE, pretty_print=True)
+			tree.write(settings.PATH_PROJECT_FILE, pretty_print=True)
 			return
 		else:
-			tree = ET.parse(settings.PROJECT_FILE)
+			tree = ET.parse(settings.PATH_PROJECT_FILE)
 
 		root = tree.getroot()
 		for p in root.findall('project'):
@@ -80,6 +81,7 @@ class Manager(metaclass=Singleton):
 			path = p.find('path').text
 			update_cmd = p.find('update').text
 			compile_cmd = p.find('compile').text
+			run_cmd = p.find('run').text
 
 			last_update = p.find('last_update').text
 			if last_update is None:
@@ -103,15 +105,15 @@ class Manager(metaclass=Singleton):
 					logging.warning("Last compile datetime error in %s ex: %s" % (name, e))
 					last_compile = None
 
-			self.add_project(name, desc, path, update_cmd, compile_cmd, last_update, last_compile)
+			self.add_project(name, desc, path, update_cmd, compile_cmd, run_cmd, last_update, last_compile)
 
 	def get_last_update(self, path):
 		os.chdir(path)
 		cmd = "stat -c %y .git/FETCH_HEAD".split()
 		return str(subprocess.check_output(cmd, stderr=subprocess.DEVNULL))[2:21]
 
-	def add_project(self, name, desc, path, update, compile, last_update=None, last_compile=None):
-		p = project.Project(name, desc, path, update, compile, last_update, last_compile)
+	def add_project(self, name, desc, path, update, compile, run, last_update=None, last_compile=None):
+		p = project.Project(name, desc, path, update, compile, run, last_update, last_compile)
 		self.projects_list.append(p)
 		logging.info("New project added " + p.name)
 

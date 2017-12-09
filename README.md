@@ -19,5 +19,5 @@ Very simple run.
 
 ## Develop
 
-The interface is developed using the latest version of glade nightly.
+The interface is developed using glade nightly.
 You can install it using [flatpak](http://flatpak.org/).

@@ -38,6 +38,11 @@ along with Gnome Projects.  If not, see <http://www.gnu.org/licenses/>.
     <property name="can_focus">False</property>
     <property name="icon_name">document-open-symbolic</property>
   </object>
+  <object class="GtkImage" id="image_open_2">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">document-open-symbolic</property>
+  </object>
   <object class="GtkImage" id="image_save">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -58,7 +63,6 @@ along with Gnome Projects.  If not, see <http://www.gnu.org/licenses/>.
         <property name="can_focus">False</property>
         <property name="row_spacing">5</property>
         <property name="column_spacing">5</property>
-        <property name="row_homogeneous">True</property>
         <child>
           <object class="GtkLabel">
             <property name="visible">True</property>
@@ -126,45 +130,28 @@ along with Gnome Projects.  If not, see <http://www.gnu.org/licenses/>.
           </packing>
         </child>
         <child>
-          <object class="GtkButton">
-            <property name="label">gtk-open</property>
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="receives_default">True</property>
-            <property name="use_stock">True</property>
-            <property name="always_show_image">True</property>
-            <signal name="clicked" handler="show-path-window" swapped="no"/>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">2</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkLabel">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">end</property>
-            <property name="label" translatable="yes">Update command :</property>
+            <property name="label" translatable="yes">Run :</property>
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">3</property>
+            <property name="top_attach">7</property>
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="input_update">
+          <object class="GtkEntry" id="input_run">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="text" translatable="yes">git pull</property>
             <property name="secondary_icon_name">edit-clear-symbolic</property>
             <property name="primary_icon_activatable">False</property>
             <property name="primary_icon_sensitive">False</property>
-            <signal name="icon-release" handler="entry-delete-icon" swapped="no"/>
           </object>
           <packing>
             <property name="left_attach">1</property>
-            <property name="top_attach">3</property>
+            <property name="top_attach">7</property>
           </packing>
         </child>
         <child>
@@ -172,18 +159,29 @@ along with Gnome Projects.  If not, see <http://www.gnu.org/licenses/>.
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">end</property>
-            <property name="label" translatable="yes">Compile command :</property>
+            <property name="label" translatable="yes">Compile :</property>
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">4</property>
+            <property name="top_attach">6</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">end</property>
+            <property name="label" translatable="yes">Update :</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">5</property>
           </packing>
         </child>
         <child>
           <object class="GtkEntry" id="input_compile">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="text" translatable="yes">cd build; cmake ..; make -j8</property>
             <property name="secondary_icon_name">edit-clear-symbolic</property>
             <property name="primary_icon_activatable">False</property>
             <property name="primary_icon_sensitive">False</property>
@@ -191,7 +189,90 @@ along with Gnome Projects.  If not, see <http://www.gnu.org/licenses/>.
           </object>
           <packing>
             <property name="left_attach">1</property>
+            <property name="top_attach">6</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="input_update">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="secondary_icon_name">edit-clear-symbolic</property>
+            <property name="primary_icon_activatable">False</property>
+            <property name="primary_icon_sensitive">False</property>
+            <signal name="icon-release" handler="entry-delete-icon" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">5</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">3</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_top">5</property>
+            <property name="margin_bottom">5</property>
+            <property name="label" translatable="yes">Commands:</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
             <property name="top_attach">4</property>
+            <property name="width">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkEntry" id="input_path">
+                <property name="width_request">39</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="secondary_icon_name">edit-clear-symbolic</property>
+                <property name="primary_icon_activatable">False</property>
+                <property name="primary_icon_sensitive">False</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Open</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="halign">end</property>
+                <property name="margin_left">10</property>
+                <property name="image">image_open_2</property>
+                <property name="always_show_image">True</property>
+                <signal name="clicked" handler="show-path-window" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack_type">end</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">2</property>
           </packing>
         </child>
       </object>
@@ -208,7 +289,7 @@ along with Gnome Projects.  If not, see <http://www.gnu.org/licenses/>.
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <property name="tooltip_text" translatable="yes">Any data will be lost</property>
+            <property name="tooltip_text" translatable="yes">Any changes data will be lost</property>
             <property name="image">image_undo</property>
             <property name="always_show_image">True</property>
             <signal name="clicked" handler="close-project-window" swapped="no"/>
@@ -319,9 +400,43 @@ along with Gnome Projects.  If not, see <http://www.gnu.org/licenses/>.
       <placeholder/>
     </child>
   </object>
+  <object class="GtkMessageDialog" id="error">
+    <property name="can_focus">False</property>
+    <property name="type">popup</property>
+    <property name="resizable">False</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="type_hint">dialog</property>
+    <property name="deletable">False</property>
+    <property name="transient_for">project_window</property>
+    <property name="attached_to">project_window</property>
+    <property name="message_type">error</property>
+    <property name="buttons">close</property>
+    <property name="text" translatable="yes">Data error!!</property>
+    <property name="secondary_text" translatable="yes">Fill all fields!!!</property>
+    <signal name="response" handler="response_dialog" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can_focus">False</property>
+            <property name="homogeneous">True</property>
+            <property name="layout_style">expand</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+  </object>
   <object class="GtkFileChooserDialog" id="path_window">
-    <property name="width_request">800</property>
-    <property name="height_request">400</property>
     <property name="can_focus">False</property>
     <property name="modal">True</property>
     <property name="window_position">center-on-parent</property>
@@ -330,6 +445,8 @@ along with Gnome Projects.  If not, see <http://www.gnu.org/licenses/>.
     <signal name="selection-changed" handler="path-window-selection-changed" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox">
+        <property name="width_request">800</property>
+        <property name="height_request">400</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
