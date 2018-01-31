@@ -1,12 +1,12 @@
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+gi.require_version('Vte', '2.91')
+from gi.repository import Gtk, Vte, GLib
 import logging
-import subprocess
 
 import settings
 import manager
-
+import projectwindow
 
 """
 Gui class manager
@@ -14,112 +14,114 @@ Gui class manager
 class Gui:
 	def __init__(self):
 		# Gui variable
-		self.builder = Gtk.Builder().new_from_file(settings.PATH_UI_MAIN)
-		self.main_window    = self.builder.get_object("main_window")
-		self.headerbar      = self.builder.get_object("headerbar")
+		builder= Gtk.Builder().new_from_file(settings.PATH_UI_MAIN)
+		self.main_window    = builder.get_object("main_window")
+		self.headerbar      = builder.get_object("headerbar")
+		self.main_window.set_wmclass("Projects", "Projects")
 		# Left pannel
-		self.projects_list  = self.builder.get_object("projects_list")
+		self.projects_list  = builder.get_object("projects_list")
 		# Right pannel
-		self.last_update_l  = self.builder.get_object("last_update")
-		self.last_compile_l = self.builder.get_object("last_compile")
-		self.description_l  = self.builder.get_object("description")
-		self.log_text       = self.builder.get_object("log")
+		self.last_update_l  = builder.get_object("last_update")
+		self.last_compile_l = builder.get_object("last_compile")
+		self.description_l  = builder.get_object("description")
 
-		self.project_window = ProjectWindow(self.builder)
-		self.pm = manager.Manager()
+		# Other
 		self.focus = None
-
+		self.terminal = self.new_term(builder.get_object("terminal"))
+		self.pm = manager.Manager(self.terminal, self.set_status)
+		self.project_window = None
 		handlers = {
 			# Main window header buttons event
 			"close-main-window"          : self.stop,
-			"clicked-update-compile-all" : (self.pm.update_compile_all, self.set_status),
-			"clicked-compile-all"        : (self.pm.compile_all, self.set_status),
-			"clicked-update-all"         : (self.pm.update_all, self.set_status),
-			"clicked-add-project"        : self.add_project,
-			# Project window buttons
-			"close-project-window" : lambda *_: self.project_window.hide(),
-			"save-project-window"  : self.save_project,
-			"show-path-window"     : lambda *_: self.project_window.path_window.show(),
-			"delete-project"       : lambda *_: self.project_window.confirm_dialog.show(),
-			"entry-delete-icon"    : lambda entry, *_: entry.set_text(""),
-			# File chooser dialog
-			"close-path-window" : self.project_window.close_path_window,
-			"open-path-window"  : lambda *_: self.project_window.path_window.hide(),
-			"path-window-selection-changed" : lambda *_:
-				self.project_window.path_header.set_subtitle(
-					self.project_window.path_window.get_current_folder()),
-			# Message dialog buttons
-			"delete-confirm"  : self.delete,
-			"undo-confirm"    : lambda *_: self.project_window.confirm_dialog.hide(),
-			"response_dialog" : lambda *_: self.project_window.error_dialog.hide()
+			"clicked-update-compile-all" : self.pm.update_compile_all,
+			"clicked-compile-all"        : self.pm.compile_all,
+			"clicked-update-all"         : self.pm.update_all,
+			"on_add_project_clicked"     : self.add_project,
 		}
-		self.builder.connect_signals(handlers)
-		self.main_window.set_wmclass ("Projects", "Projects")
+		builder.connect_signals(handlers)
+
+	def new_term(self, box):
+		terminal = Vte.Terminal()
+		terminal.set_scrollback_lines(5000)
+		terminal.set_size(500,10)
+		terminal.set_encoding("UTF-8")
+		terminal.spawn_sync(
+			Vte.PtyFlags.DEFAULT,
+			settings.PATH_HOME,
+			[settings.SHELL],
+			[],
+			GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+			None,
+			None
+		)
+		box.add(terminal)
+		return terminal
+
+	def get_project_window(self):
+		if self.project_window is None:
+			self.project_window = projectwindow.ProjectWindow(self.pm, self.show_projects)
+			self.project_window.window.set_transient_for(self.main_window)
+		return self.project_window
 
 	def start(self):
 		self.pm.start()
 		self.show_projects()
 		self.main_window.show()
+		self.terminal.show()
 
 	def stop(self, *args):
-		self.pm.close()
+		self.pm.stop()
+		logging.shutdown()
 		Gtk.main_quit()
 
 	def add_project(self, *args):
-		self.project_window.show()
-		self.show_projects()
+		self.get_project_window().show()
 
-	def save_project(self, *args):
-		self.project_window.save(self.pm)
-		self.show_projects()
-
-	def delete(self, *args):
-		self.project_window.confirm_dialog.hide()
-		self.project_window.project_window.hide()
-		self.pm.delete_project(self.project_window.buffer)
-		if self.project_window.buffer == self.focus:
-			self.focus = None
-		self.project_window.buffer = None
-		self.show_projects()
+	def settings(self, btn, p):
+		self.get_project_window().show(project=p)
 
 	def show_projects(self):
+		logging.debug("Show project")
 		for w in self.projects_list.get_children():
 			self.projects_list.remove(w)
 		for p in self.pm.projects_list:
 			row = ProjectRow(p, self)
 			self.projects_list.add(row.row)
 
-			if self.focus is None:
-				self.projects_list.select_row(row.row)
-				self.show_info(row.p)
-				self.focus = row
-			elif self.focus is row:
-				self.projects_list.select_row(row.row)
-				self.show_info(row.p)
-
 	def str_date(self, date):
 		label = "Not yet"
-		if date is not None:
-			label = date.strftime(settings.DATE_FORMAT)
+		if date:
+			label = date
 		return label
 
 	def show_info(self, project):
 		self.last_update_l.set_text(self.str_date(project.last_update))
 		self.last_compile_l.set_text(self.str_date(project.last_compile))
-		self.description_l.set_text(project.description if project.description is not None else "")
+		self.description_l.set_text(project.description)
 		project.error.hide()
-		#self.log_text.set_buffer(p.log)
 
 	def handle_focus(self, widget, btn, row):
-		if btn.button == 3:
-			logging.debug("Handle right input")
-			row.menu.show()
-		elif btn.button == 1:
-			logging.debug("Handle left input")
+		if btn.button == 1:  # Left click
+			logging.debug("Handle left input, cd")
+			if self.focus:
+				self.focus.close()
+			self.pm.change_dir(row.p.path)
+		elif btn.button == 3:  # Right click
+			logging.debug("Handle right input, open the button list")
+			if self.focus is None:
+				self.focus = row
+				self.focus.open()
+			elif self.focus != row:
+				self.focus.close()
+				self.focus = row
+				self.focus.open()
+			else:
+				self.focus.close()
+				self.focus = None
 		self.show_info(row.p)
 		self.projects_list.select_row(row.row)
 
-	def set_status(self, project, action):
+	def set_status(self, action, project=None):
 		if action == "update":
 			self.headerbar.set_subtitle("Updating " + project.name)
 			project.spinner.show()
@@ -138,116 +140,37 @@ class Gui:
 			project.error.hide()
 			logging.error("Invalid status action")
 
-	def open_file_manager(self, btn, p):
-		p.open()
-
-	def run_project(self, btn, p):
-		p.run()
-
-
 class ProjectRow():
 	def __init__(self, p, gui):
 		builder = Gtk.Builder()
-		builder.add_from_file(settings.PATH_UI_ROW)
+		builder.add_from_file(settings.PATH_UI_PROJECT_ROW)
 		builder.get_object("project_name").set_text(p.name)
 
 		self.row  = builder.get_object("project_row")
-		self.menu = builder.get_object("popup_menu")
+		self.btn_list  = builder.get_object("btn_list")
 		self.p    = p
 		p.spinner = builder.get_object("spinner")
 		p.error   = builder.get_object("error")
-		self.menu.set_relative_to(self.row)
 
 		handlers = {
 			"on_project_row_button_release_event" : (gui.handle_focus, self),
-			"on_update_btn_clicked"         : (gui.pm.update, p, gui.set_status),
-			"on_compile_btn_clicked"        : (gui.pm.compile, p, gui.set_status),
-			"on_update_compile_btn_clicked" : (gui.pm.update_compile, p, gui.set_status),
-			"on_settings_btn_clicked"       : (gui.project_window.modify, p),
-			"on_open_btn_clicked"           : (gui.open_file_manager, p),
-			"on_run_btn_clicked"            : (gui.run_project, p)
+			"on_update_compile_btn_clicked" : (gui.pm.update_compile,    p),
+			"on_run_btn_clicked"            : (gui.pm.run,               p),
+			"on_open_btn_clicked"           : (gui.pm.open,              p),
+			"on_settings_btn_clicked"       : (gui.settings,  p),
 		}
 		builder.connect_signals(handlers)
 
+		for c in p.commands:
+			btn = Gtk.Button()
+			btn.set_label(c.name)
+			btn.connect("clicked", gui.pm.run_command, c, p.path)
+			btn.show()
+			self.btn_list.add(btn)
 
-class ProjectWindow():
-	def __init__(self, builder):
-		self.project_window = builder.get_object("project_window")
-		self.path_window    = builder.get_object("path_window")
-		self.path_header    = builder.get_object("path_header")
-		self.confirm_dialog = builder.get_object("confirm")
-		self.error_dialog   = builder.get_object("error")
+	def open(self):
+		if len(self.p.commands) > 0:
+			self.btn_list.show()
 
-		self.entry_name = builder.get_object("input_name")
-		self.entry_desc = builder.get_object("input_description")
-		self.entry_path = builder.get_object("input_path")
-		self.entry_update = builder.get_object("input_update")
-		self.entry_compile = builder.get_object("input_compile")
-		self.entry_run = builder.get_object("input_run")
-		self.btn_delete = builder.get_object("delete")
-		self.buffer = None
-
-	def show(self, *args):
-		logging.debug("Starting the project_window to create a new project")
-		self.entry_name.set_text("")
-		self.entry_desc.set_text("")
-		self.entry_path.set_text(settings.PATH_HOME)
-		self.path_window.set_current_folder(settings.PATH_HOME)
-		self.entry_update.set_text("git pull")
-		self.entry_compile.set_text("cd build; cmake ..; make -j8")
-		self.btn_delete.hide()
-		self.project_window.show()
-
-	def hide(self):
-		self.project_window.hide()
-		self.buffer = None
-
-	def save(self, pm):
-		name = self.entry_name.get_text()
-		desc = self.entry_desc.get_text()
-		path = self.path_window.get_current_folder()
-		update = self.entry_update.get_text()
-		compile = self.entry_compile.get_text()
-		run = self.entry_run.get_text()
-
-		if self.buffer is None:
-			if name != "" and path is not None and update != "":
-				pm.add_project(name, desc, path, update, compile, run)
-			else:
-				self.error_dialog.show()
-				logging.error("Fill all fields!!!")
-				return
-		else:
-			self.buffer.name = name
-			self.buffer.description = desc
-			self.buffer.path = path
-			self.buffer.update_cmd = update
-			self.buffer.compile_cmd = compile
-
-		self.project_window.hide()
-		self.buffer = None
-
-	def delete(self, *args):
-		pm = args[-1]
-		pm.delete_project(self.buffer)
-		self.buffer = None
-		self.dialog.hide()
-		self.project_window.hide()
-		self.show_projects()
-
-	def modify(self, btn, p):
-		self.buffer = p
-		logging.debug("Starting the assistant to modify the project")
-		self.entry_name.set_text(p.name)
-		self.entry_desc.set_text(p.description if p.description is not None else "")
-		self.entry_path.set_text(p.path)
-		self.path_window.set_current_folder(p.path)
-		self.entry_update.set_text(p.update_cmd)
-		self.entry_compile.set_text(p.compile_cmd)
-		self.btn_delete.show()
-		self.project_window.show()
-
-	def close_path_window(self, *args):
-		self.path_window.hide()
-		self.entry_path.set_text(path_window.get_current_folder())
-		self.path_window.set_current_folder(settings.PATH_HOME)
+	def close(self):
+		self.btn_list.hide()

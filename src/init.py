@@ -74,8 +74,7 @@ def test_log():
 
 
 if __name__ == "__main__":
-	#logging.basicConfig(filename='gnome-projects.log', format='%(levelname)s:%(message)s', level=logging.DEBUG)
-	logging.basicConfig(format='%(levelname)-8s [ %(threadName)-10s %(filename)s:%(lineno)-4s] %(message)s',level=logging.DEBUG)
+	logging.basicConfig(format='%(levelname)-8s [ %(threadName)-10s %(filename)-10s %(lineno)-5s] %(message)s', level=logging.DEBUG)
 	logging.StreamHandler.emit = add_coloring_to_emit_ansi(logging.StreamHandler.emit)
 	#~ test_log()
 	try:
@@ -83,7 +82,7 @@ if __name__ == "__main__":
 		InitSignal(gui)
 		gui.start()
 		Gtk.main()
-	except Exception as e:
+	except Exception as e:  # FIXME sometimes don't work
 		logging.critical("Exception!!!!")
 		try:
 			gui.stop()

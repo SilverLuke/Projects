@@ -7,12 +7,13 @@ Manage any project with a simple GUI.
 If you are using Debian GNU/Linux:
 
 ```
-sudo apt install python3
+sudo apt install python3 python-vte
 ```
 
 ## Usage
 
 Very simple run.
+
 ```
 ./src/init.py
 ```

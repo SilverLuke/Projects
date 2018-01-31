@@ -1,67 +1,71 @@
 from datetime import datetime
 
-import subprocess
 import logging
 import os
+
+class Command():
+	def __init__(self, name, command, type):
+		self.icon = None  # TODO mabye some day
+		self.name = name
+		self.command = command
+		self.type = type
+
+	def get_command(self):
+		return str(" " + self.command + "\n")
 
 """
 Single project class
 """
 class Project():
-	def __init__(self, name, desc, path, update_cmd, compile_cmd, run_cmd, last_update=None, last_compile=None):
-		# Essential variable
+	def __init__(self, name, path, desc, commands, last_update="", last_compile=""):
 		self.name = name
 		self.path = path
-		self.update_cmd = update_cmd
-		self.compile_cmd = compile_cmd
-		self.run_cmd = run_cmd
+		self.commands = commands
 		# Optional variable
 		self.description = desc
 		self.last_update = last_update
 		self.last_compile = last_compile
-		self.log = None #= Gtk.TextBuffer()
-
+		# ListRow graphics
 		self.spinner = None
 		self.error = None
 
 	def __str__(self):
-		return  "Nome:        " + self.name + \
-				"\n\tDesc:    " + self.description + \
+		str =   "Name:  " + self.name + \
 				"\n\tPath:    " + self.path + \
-				"\n\tUpdate:  " + self.update_cmd + " (" + str(self.last_update) +")" + \
-				"\n\tCompile: " + self.compile_cmd + " (" + str(self.last_compile) + ")"
+				"\n\tDesc:    " + self.description + \
+				"\n\tCommands:"
+		for c in self.commands:
+			str += "\n\t\t"+ c.name + "\t:\t" + c.command + " \t" + c.type
+		return str
+
+	def add_command(self, name, command, type):
+		self.commands.append(Command(name,command,type))
+
+	def update_value(self, name, path, desc, commands):
+		self.name = name
+		self.path = path
+		self.description = desc
+		self.commands = commands
 
 	def go_project_dir(self):
 		os.chdir(self.path)
 
-	def update(self, *args):
-		val = 0
-		if self.update_cmd is not None:
-			val = self.exec_cmd(self.update_cmd)
-			self.last_update = datetime.now()
-		return val
+	def get_type_cmd(self, _type):
+		tmp = []
+		for c in self.commands:
+			if c.type == _type:
+				tmp.append(c.get_command())
+		return tmp
 
-	def compile(self, *args):
-		val = 0
-		if self.compile_cmd is not None:
-			val = self.exec_cmd(self.compile_cmd)
-			self.last_compile = datetime.now()
-		return val
+	def get_update_cmd(self):
+		return self.get_type_cmd("update")
 
-	def run(self):
-		logging.debug("run " + self.name)
-		self.go_project_dir()
-		subprocess.Popen(self.run_cmd, shell=True)
+	def get_compile_cmd(self, *args):
+		return self.get_type_cmd("compile")
 
-	def open(self):
-		logging.debug("open" + self.name)
-		subprocess.Popen("nautilus " + self.path, shell=True)
+	def get_run_cmd(self):
+		return self.get_type_cmd("run")
 
-	def exec_cmd(self, cmd):
-		os.chdir(self.path)
-		logging.debug("Working for %s, running command %s" % (self.name, cmd))
-		val = subprocess.call(cmd, shell=True)
-		if int(val) == 0:
-			logging.debug("Command executed successfully")
-		else:
-			logging.error("Return value %i" % val)
+	def get_other_cmd(self):
+		return self.get_type_cmd("other")
+
