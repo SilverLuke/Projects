@@ -106,7 +106,7 @@ class ProjectWindow():
 		self.current_project = None
 
 	def delete(self, *args):
-		pm.delete_project(self.current_project)
+		self.pm.delete_project(self.current_project)
 		self.current_project = None
 		self.dialog.hide()
 		self.window.hide()

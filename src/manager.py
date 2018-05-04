@@ -3,7 +3,7 @@ import os
 import logging
 import subprocess
 
-from project import Project, Command
+from project import Project
 import settings
 
 
@@ -113,8 +113,8 @@ class Manager():
 		self.save_xml()
 
 	def change_dir(self, path):
-		cd = " cd %s\n" % path
-		self.terminal.feed_child(cd, len(cd))
+		cd = bytes(" cd %s\n" % path, 'utf-8')
+		self.terminal.feed_child(cd)
 
 	def update_all(self, btn):
 		logging.info("Update all projects")
@@ -136,7 +136,7 @@ class Manager():
 		cmd = p.get_update_cmd()
 		self.gui_notify("update", p)
 		for c in cmd:
-			self.terminal.feed_child(c, len(c))
+			self.terminal.feed_child(c)
 		self.gui_notify("idle", p)
 
 	def compile(self, p):
@@ -144,13 +144,13 @@ class Manager():
 		cmd = p.get_compile_cmd()
 		self.gui_notify("compile", p)
 		for c in cmd:
-			self.terminal.feed_child(c, len(c))
+			self.terminal.feed_child(c)
 		self.gui_notify("idle", p)
 
 	def run_command(self, btn, cmd, path):
 		self.change_dir(path)
 		tmp = cmd.get_command()
-		self.terminal.feed_child(tmp, len(tmp))
+		self.terminal.feed_child(tmp)
 
 	def update_compile(self, btn, p):
 		self.update(p)

@@ -1,6 +1,3 @@
-from datetime import datetime
-
-import logging
 import os
 
 class Command():
@@ -11,7 +8,7 @@ class Command():
 		self.type = type
 
 	def get_command(self):
-		return str(" " + self.command + "\n")
+		return bytes(" " + self.command + "\n", 'utf-8')
 
 """
 Single project class
